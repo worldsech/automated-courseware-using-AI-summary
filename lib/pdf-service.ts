@@ -1,92 +1,51 @@
-import { auth } from "./firebase";
-import { geminiService } from "./gemini-service";
+import * as pdfjsLib from "pdfjs-dist";
+
+// The worker is needed for pdfjs-dist to work in the browser.
+// Make sure the version matches the one in your package.json.
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`;
 
 export interface PDFProcessingResult {
   text: string;
   summary: string;
-  audioUrl?: string;
 }
 
-export class PDFService {
-  static async uploadPDF(file: File, courseId: string): Promise<string> {
-    if (!auth.currentUser) {
-      throw new Error("User must be authenticated to upload files.");
+class PDFServiceClass {
+  private async extractText(pdfUrl: string): Promise<string> {
+    const loadingTask = pdfjsLib.getDocument(pdfUrl);
+    const pdf = await loadingTask.promise;
+    let fullText = "";
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map((item) => ('str' in item ? item.str : '')).join(" ");
+      fullText += pageText + "\n\n";
     }
-    const token = await auth.currentUser.getIdToken();
-    const fileName = `${Date.now()}_${file.name}`;
 
-    const response = await fetch(
-      `/api/upload-blob?filename=${fileName}&courseId=${courseId}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: file,
-      }
-    );
-
-    const newBlob = await response.json();
-
-    return newBlob.url;
+    return fullText;
   }
 
-  static async extractTextFromPDF(pdfUrl: string): Promise<string> {
-    try {
-      // In a real implementation, you would use a PDF parsing library like pdf-parse
-      // For demo purposes, we'll simulate text extraction
-      const response = await fetch(pdfUrl);
-      const arrayBuffer = await response.arrayBuffer();
+  private async summarizeText(text: string): Promise<string> {
+    const response = await fetch("/api/summarize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
 
-      // Simulated text extraction - in production use pdf-parse or similar
-      return "This is extracted text from the PDF document. In a real implementation, this would contain the actual PDF content extracted using a PDF parsing library like pdf-parse or PDF.js.";
-    } catch (error) {
-      console.error("Error extracting text from PDF:", error);
-      throw new Error("Failed to extract text from PDF");
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to summarize text.");
     }
+
+    const { summary } = await response.json();
+    return summary;
   }
 
-  static async generateSummary(text: string): Promise<string> {
-    try {
-      if (geminiService.isConfigured()) {
-        return await geminiService.generateSummary(text);
-      }
-
-      // Fallback to simple summarization if Gemini is not configured
-      const sentences = text.split(".").filter((s) => s.trim().length > 0);
-      const summary = sentences.slice(0, 3).join(". ") + ".";
-
-      return summary || "Summary of the document content would appear here.";
-    } catch (error) {
-      console.error("Error generating summary:", error);
-      throw new Error("Failed to generate summary");
-    }
-  }
-
-  static async generateTextToSpeech(text: string): Promise<string> {
-    try {
-      // In a real implementation, you would use a TTS service like Google Cloud TTS
-      // For demo purposes, we'll use the Web Speech API
-      if ("speechSynthesis" in window) {
-        return "browser-tts"; // Indicator to use browser TTS
-      }
-
-      throw new Error("Text-to-speech not supported");
-    } catch (error) {
-      console.error("Error generating text-to-speech:", error);
-      throw new Error("Failed to generate audio");
-    }
-  }
-
-  static async processPDF(pdfUrl: string): Promise<PDFProcessingResult> {
-    const text = await this.extractTextFromPDF(pdfUrl);
-    const summary = await this.generateSummary(text);
-    const audioUrl = await this.generateTextToSpeech(text);
-
-    return {
-      text,
-      summary,
-      audioUrl: audioUrl === "browser-tts" ? undefined : audioUrl,
-    };
+  public async processPDF(pdfUrl: string): Promise<PDFProcessingResult> {
+    const text = await this.extractText(pdfUrl);
+    const summary = await this.summarizeText(text);
+    return { text, summary };
   }
 }
+
+export const PDFService = new PDFServiceClass();
