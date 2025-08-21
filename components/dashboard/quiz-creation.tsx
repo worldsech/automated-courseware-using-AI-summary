@@ -60,16 +60,23 @@ export const QuizCreation = ({ courseId, courseName }: QuizCreationProps) => {
   }
 
   const updateOption = (questionIndex: number, optionIndex: number, value: string) => {
-    const updatedQuestions = [...questions]
-    if (updatedQuestions[questionIndex].options) {
-      updatedQuestions[questionIndex].options![optionIndex] = value
-      setQuestions(updatedQuestions)
+    const updatedQuestions = [...questions];
+    const question = updatedQuestions[questionIndex];
+    if (question.options) {
+      const oldOptionValue = question.options[optionIndex];
+      question.options[optionIndex] = value;
+
+      // If the answer being edited was the correct one, clear it to prevent stale data.
+      if (question.correctAnswer === oldOptionValue) {
+        question.correctAnswer = '';
+      }
+      setQuestions(updatedQuestions);
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
     setError("")
     setSuccess("")
 

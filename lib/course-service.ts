@@ -330,6 +330,7 @@ export const getStudentScores = async (
     for (const quiz of quizzes) {
       const q = query(
         collection(db, "quizResults"),
+        where("courseId", "==", course.id),
         where("quizId", "==", quiz.id)
       );
       const querySnapshot = await getDocs(q);
