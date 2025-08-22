@@ -366,6 +366,60 @@ export const getStudentScores = async (
   return results;
 };
 
+export const getLecturerStats = async (
+  lecturerId: string
+): Promise<{
+  courseCount: number;
+  studentCount: number;
+  pendingEnrollmentCount: number;
+}> => {
+  // 1. Get all courses for the lecturer
+  const courses = await getCoursesByLecturer(lecturerId);
+  const courseCount = courses.length;
+
+  if (courseCount === 0) {
+    return { courseCount: 0, studentCount: 0, pendingEnrollmentCount: 0 };
+  }
+
+  const courseIds = courses.map((c) => c.id);
+
+  // 2. Get all enrollments for these courses
+  // Firestore 'in' query is limited to 30 items. If a lecturer has more courses,
+  // we need to run multiple queries.
+  const enrollmentPromises = [];
+  for (let i = 0; i < courseIds.length; i += 30) {
+    const courseIdChunk = courseIds.slice(i, i + 30);
+    const q = query(
+      collection(db, "enrollments"),
+      where("courseId", "in", courseIdChunk)
+    );
+    enrollmentPromises.push(getDocs(q));
+  }
+
+  const querySnapshots = await Promise.all(enrollmentPromises);
+  const allEnrollments: Enrollment[] = [];
+  querySnapshots.forEach((snapshot) => {
+    snapshot.docs.forEach((doc) => {
+      allEnrollments.push(doc.data() as Enrollment);
+    });
+  });
+
+  // 3. Calculate stats
+  const approvedEnrollments = allEnrollments.filter((e) => e.approved);
+  const pendingEnrollmentCount =
+    allEnrollments.length - approvedEnrollments.length;
+
+  const studentIds = new Set<string>();
+  approvedEnrollments.forEach((e) => studentIds.add(e.studentId));
+  const studentCount = studentIds.size;
+
+  return {
+    courseCount,
+    studentCount,
+    pendingEnrollmentCount,
+  };
+};
+
 export const getCourseStudents = async (
   courseId: string
 ): Promise<(Enrollment & { studentName: string; studentEmail: string })[]> => {

@@ -32,20 +32,20 @@ export const StudentOverview = () => {
 
     try {
       const student = user as Student;
-      console.log("[v0] Loading dashboard data for student:", student.id);
+      console.log("Loading dashboard data for student:", student.id);
 
       const [enrollmentsData, resultsData] = await Promise.all([
         getStudentEnrollments(student.id),
         getStudentQuizResults(student.id),
       ]);
 
-      console.log("[v0] Loaded enrollments:", enrollmentsData.length);
-      console.log("[v0] Loaded quiz results:", resultsData.length);
+      console.log(" Loaded enrollments:", enrollmentsData.length);
+      console.log("Loaded quiz results:", resultsData.length);
 
       setEnrollments(enrollmentsData);
       setQuizResults(resultsData);
     } catch (error) {
-      console.error("[v0] Error loading dashboard data:", error);
+      console.error("Error loading dashboard data:", error);
       // Set empty arrays to prevent UI crashes
       setEnrollments([]);
       setQuizResults([]);

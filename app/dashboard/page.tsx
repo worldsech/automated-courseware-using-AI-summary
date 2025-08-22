@@ -2,6 +2,7 @@
 
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { StudentOverview } from "@/components/dashboard/student-overview"
+import { LecturerOverview } from "@/components/dashboard/lecturer-overview"
 import { AdminOverview } from "@/components/dashboard/admin-overview"
 import { useAuthContext } from "@/components/auth-provider"
 import { useRouter } from "next/navigation"
@@ -30,32 +31,22 @@ export default function DashboardPage() {
     return null
   }
 
-  if (user.role === "admin") {
-    return (
-      <DashboardLayout activeTab="overview">
-        <AdminOverview />
-      </DashboardLayout>
-    )
+  const renderDashboardContent = () => {
+    switch (user.role) {
+      case "admin":
+        return <AdminOverview />
+      case "student":
+        return <StudentOverview />
+      case "lecturer":
+        return <LecturerOverview />
+      default:
+        return <div>Welcome!</div>
+    }
   }
 
-  // Show student overview for students
-  if (user.role === "student") {
-    return (
-      <DashboardLayout activeTab="overview">
-        <StudentOverview />
-      </DashboardLayout>
-    )
-  }
-
-  // For lecturers, show lecturer overview (already implemented)
   return (
     <DashboardLayout activeTab="overview">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard Overview</h1>
-          <p className="text-muted-foreground">Welcome back! Here's what's happening with your courses.</p>
-        </div>
-      </div>
+      {renderDashboardContent()}
     </DashboardLayout>
   )
 }
