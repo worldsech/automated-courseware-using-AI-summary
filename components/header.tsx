@@ -19,7 +19,7 @@ export const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          {/* <nav className="hidden md:flex items-center gap-8">
             <Link href="/courses" className="text-foreground hover:text-primary transition-colors">
               Courses
             </Link>
@@ -29,7 +29,7 @@ export const Header = () => {
             <Link href="/contact" className="text-foreground hover:text-primary transition-colors">
               Contact
             </Link>
-          </nav>
+          </nav> */}
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center gap-4">

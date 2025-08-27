@@ -6,8 +6,19 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { getSystemStats } from "@/lib/admin-service"
 import { Users, GraduationCap, BookOpen, UserCheck, Loader2 } from "lucide-react"
 
+interface SystemStats {
+  totalStudents: number
+  totalLecturers: number
+  totalCourses: number
+  coursesWithNotes: number
+  approvedEnrollments: number
+  totalEnrollments: number
+  totalQuizAttempts: number
+}
+
 export const AdminOverview = () => {
-  const [stats, setStats] = useState<any>(null)
+  // Use the specific interface for strong typing
+  const [stats, setStats] = useState<SystemStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
@@ -17,7 +28,7 @@ export const AdminOverview = () => {
 
   const loadStats = async () => {
     try {
-      const systemStats = await getSystemStats()
+      const systemStats: SystemStats = await getSystemStats()
       setStats(systemStats)
     } catch (error: any) {
       setError(error.message || "Failed to load system statistics")

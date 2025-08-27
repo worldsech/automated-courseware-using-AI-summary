@@ -7,8 +7,7 @@ import { AuthProvider } from "@/components/auth-provider"
 
 export const metadata: Metadata = {
   title: "Automated Courseware System",
-  description: "Platform for students and lecturers to manage course materials",
-  generator: "v0.app",
+  description: "Platform for students and lecturers to manage course materials"
 }
 
 export default function RootLayout({
@@ -21,9 +20,9 @@ export default function RootLayout({
       <head>
         <style>{`
 html {
-  font-family: ${GeistSans.style.fontFamily};
-  --font-sans: ${GeistSans.variable};
-  --font-mono: ${GeistMono.variable};
+  font-family: '__GeistSans_fb8f2c', '__GeistSans_Fallback_fb8f2c';
+  --font-sans: __variable_fb8f2c;
+  --font-mono: __variable_f910ec;
 }
         `}</style>
       </head>
